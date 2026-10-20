@@ -7,6 +7,11 @@ export type Json =
   | Json[];
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.18";
+  };
   public: {
     Tables: {
       conversation_members: {
@@ -15,7 +20,6 @@ export type Database = {
           joined_at: string;
           user_id: string;
         };
-        ComputedFields: never;
         Insert: {
           conversation_id: string;
           joined_at?: string;
@@ -50,7 +54,6 @@ export type Database = {
           id: string;
           name: string | null;
         };
-        ComputedFields: never;
         Insert: {
           created_at?: string;
           created_by?: string | null;
@@ -82,7 +85,6 @@ export type Database = {
           sender_id: string | null;
           transcript: string | null;
         };
-        ComputedFields: never;
         Insert: {
           conversation_id: string;
           created_at?: string;
@@ -122,7 +124,6 @@ export type Database = {
           display_name: string;
           id: string;
         };
-        ComputedFields: never;
         Insert: {
           created_at?: string;
           display_name: string;
