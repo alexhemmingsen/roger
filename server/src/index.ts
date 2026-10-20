@@ -1,5 +1,6 @@
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
+import { WebSocketServer } from "ws";
 import { AppError } from "./errors.ts";
 import { api } from "./routes/index.ts";
 import { supabaseAdmin } from "./supabase.ts";
@@ -27,6 +28,13 @@ app.onError((error, c) => {
   return c.json({ error: "Internal server error" }, 500);
 });
 
-serve({ fetch: app.fetch, port }, (info) => {
-  console.log(`Server listening on http://localhost:${info.port}`);
-});
+serve(
+  {
+    fetch: app.fetch,
+    port,
+    websocket: { server: new WebSocketServer({ noServer: true }) },
+  },
+  (info) => {
+    console.log(`Server listening on http://localhost:${info.port}`);
+  },
+);
