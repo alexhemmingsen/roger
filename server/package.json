@@ -5,7 +5,10 @@
     "dev": "tsx watch --env-file-if-exists=.env src/index.ts",
     "build": "tsc",
     "start": "node --env-file-if-exists=.env dist/index.js",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "db:push": "supabase db push",
+    "db:new": "supabase migration new",
+    "db:types": "supabase gen types typescript --linked --schema public > src/database.types.ts && pnpm dlx prettier@3 --write src/database.types.ts"
   },
   "type": "module",
   "private": true,
@@ -17,13 +20,15 @@
   },
   "devDependencies": {
     "@types/node": "^24.19.2",
+    "supabase": "^2.121.0",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2"
   },
   "packageManager": "pnpm@10.33.0",
   "pnpm": {
     "onlyBuiltDependencies": [
-      "esbuild"
+      "esbuild",
+      "supabase"
     ]
   }
 }
