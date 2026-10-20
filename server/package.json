@@ -10,7 +10,10 @@
     "db:new": "supabase migration new",
     "db:types": "supabase gen types typescript --linked --schema public > src/database.types.ts && pnpm dlx prettier@3 --write src/database.types.ts",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "db:start": "supabase start",
+    "db:stop": "supabase stop --no-backup"
   },
   "type": "module",
   "private": true,
