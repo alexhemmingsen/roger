@@ -27,6 +27,8 @@ process.env.SUPABASE_URL = local.url;
 process.env.SUPABASE_PUBLISHABLE_KEY = local.publishableKey;
 process.env.SUPABASE_SECRET_KEY = local.secretKey;
 delete process.env.SUPABASE_JWKS_URL;
+// Keep transcription on its stub, so the test never calls OpenAI.
+delete process.env.OPENAI_API_KEY;
 
 const { startServer } = await import("../app.ts");
 const { complete } = await import("../services/llm.ts");

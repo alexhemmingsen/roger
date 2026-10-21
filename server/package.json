@@ -18,9 +18,11 @@
   "type": "module",
   "private": true,
   "dependencies": {
+    "@ai-sdk/openai": "^4.0.99",
     "@hono/node-server": "^2.1.5",
     "@supabase/server": "^1.9.2",
     "@supabase/supabase-js": "^2.118.0",
+    "ai": "^7.0.148",
     "hono": "^4.13.13",
     "ws": "^8.22.0"
   },
