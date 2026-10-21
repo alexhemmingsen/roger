@@ -1,35 +1,43 @@
 import { useRouter } from "expo-router";
-import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { Avatar } from "@/components/avatar";
-import { conversationTitle, formatTime } from "@/format";
-import { useMockStore } from "@/mock-store";
+import { conversationTitle, formatDateTime } from "@/format";
+import { usePullToRefresh, useRefreshOnFocus } from "@/hooks/use-refresh";
+import { useConversations } from "@/queries";
+import { useMe } from "@/session";
 import { useTheme } from "@/theme";
 
 export default function ConversationsScreen() {
   const theme = useTheme();
   const router = useRouter();
-  const { conversations, messages } = useMockStore();
-
-  const rows = conversations
-    .map((conversation) => {
-      const last = messages.findLast((m) => m.conversation_id === conversation.id);
-      return { conversation, last, activeAt: last?.created_at ?? conversation.created_at };
-    })
-    .sort((a, b) => b.activeAt.localeCompare(a.activeAt));
+  const me = useMe();
+  const conversations = useConversations();
+  const pull = usePullToRefresh(conversations.refetch);
+  useRefreshOnFocus(conversations.refetch);
 
   return (
     <FlatList
       contentInsetAdjustmentBehavior="automatic"
       style={{ backgroundColor: theme.background }}
-      data={rows}
-      keyExtractor={(row) => row.conversation.id}
+      data={conversations.data ?? []}
+      keyExtractor={(conversation) => conversation.id}
+      refreshing={pull.refreshing}
+      onRefresh={pull.onRefresh}
       ListEmptyComponent={
-        <Text style={[styles.empty, { color: theme.secondaryText }]}>
-          No conversations yet. Start one from People.
-        </Text>
+        conversations.data ? (
+          <Text style={[styles.empty, { color: theme.secondaryText }]}>
+            No conversations yet. Start one from People.
+          </Text>
+        ) : conversations.error ? (
+          <Text style={[styles.empty, { color: theme.secondaryText }]}>
+            {conversations.error.message}
+          </Text>
+        ) : (
+          <ActivityIndicator style={styles.empty} />
+        )
       }
-      renderItem={({ item: { conversation, last, activeAt } }) => {
-        const title = conversationTitle(conversation);
+      renderItem={({ item: conversation }) => {
+        const title = conversationTitle(conversation, me.id);
         return (
           <Pressable
             onPress={() => router.push(`/conversation/${conversation.id}`)}
@@ -40,18 +48,11 @@ export default function ConversationsScreen() {
           >
             <Avatar name={title} size={48} />
             <View style={styles.text}>
-              <View style={styles.titleRow}>
-                <Text style={[styles.title, { color: theme.text }]} numberOfLines={1}>
-                  {title}
-                </Text>
-                <Text style={[styles.time, { color: theme.secondaryText }]}>
-                  {formatTime(activeAt)}
-                </Text>
-              </View>
-              <Text style={[styles.preview, { color: theme.secondaryText }]} numberOfLines={2}>
-                {last
-                  ? `${last.sender?.display_name ?? "Unknown"}: ${last.transcript ?? "Transcribing…"}`
-                  : "No messages yet"}
+              <Text style={[styles.title, { color: theme.text }]} numberOfLines={1}>
+                {title}
+              </Text>
+              <Text style={[styles.subtitle, { color: theme.secondaryText }]}>
+                Started {formatDateTime(conversation.created_at)}
               </Text>
             </View>
           </Pressable>
@@ -62,17 +63,16 @@ export default function ConversationsScreen() {
 }
 
 const styles = StyleSheet.create({
-  empty: { textAlign: "center", marginTop: 48, fontSize: 16 },
+  empty: { textAlign: "center", marginTop: 48, fontSize: 16, marginHorizontal: 24 },
   row: {
     flexDirection: "row",
+    alignItems: "center",
     gap: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   text: { flex: 1, gap: 2 },
-  titleRow: { flexDirection: "row", alignItems: "baseline", gap: 8 },
-  title: { flex: 1, fontSize: 17, fontWeight: "600" },
-  time: { fontSize: 14 },
-  preview: { fontSize: 15 },
+  title: { fontSize: 17, fontWeight: "600" },
+  subtitle: { fontSize: 15 },
 });

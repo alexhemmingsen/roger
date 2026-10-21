@@ -1,41 +1,67 @@
 import { Stack, useLocalSearchParams } from "expo-router";
 import { useRef } from "react";
-import { FlatList, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, FlatList, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { TalkButton } from "@/components/talk-button";
 import { conversationTitle, formatTime } from "@/format";
+import { usePullToRefresh, useRefreshOnFocus } from "@/hooks/use-refresh";
 import { useTalk } from "@/hooks/use-talk";
-import { ME_ID, useMockStore } from "@/mock-store";
+import { refreshMessages, useConversation, useMessages } from "@/queries";
+import { useServerEvent } from "@/realtime";
+import { useMe } from "@/session";
 import { useTheme } from "@/theme";
 import type { Message } from "@/types";
 
 export default function ConversationScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+  const me = useMe();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { conversations, messages } = useMockStore();
-  const conversation = conversations.find((c) => c.id === id);
-  const history = messages.filter((m) => m.conversation_id === id);
-  const talk = useTalk(conversation);
   const list = useRef<FlatList<Message>>(null);
+
+  const conversation = useConversation(id).data ?? null;
+  const messages = useMessages(id);
+  const pull = usePullToRefresh(messages.refetch);
+  useRefreshOnFocus(messages.refetch);
+  const talk = useTalk(conversation);
+
+  // New messages appear when a talk ends. Transcripts follow a moment later.
+  function reloadSoon() {
+    refreshMessages(id);
+    setTimeout(() => refreshMessages(id), 2500);
+  }
+
+  useServerEvent((event) => {
+    if (event.type === "talk_ended" && event.conversationId === id) reloadSoon();
+  });
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
-      <Stack.Screen options={{ title: conversation ? conversationTitle(conversation) : "" }} />
+      <Stack.Screen options={{ title: conversation ? conversationTitle(conversation, me.id) : "" }} />
 
       <FlatList
         ref={list}
         contentInsetAdjustmentBehavior="automatic"
-        data={history}
+        data={messages.data ?? []}
         keyExtractor={(m) => m.id}
         contentContainerStyle={styles.messages}
+        refreshing={pull.refreshing}
+        onRefresh={pull.onRefresh}
         onContentSizeChange={() => list.current?.scrollToEnd({ animated: true })}
         ListEmptyComponent={
-          <Text style={[styles.empty, { color: theme.secondaryText }]}>
-            Hold the button and say something.
-          </Text>
+          messages.data ? (
+            <Text style={[styles.empty, { color: theme.secondaryText }]}>
+              Hold the button and say something.
+            </Text>
+          ) : messages.error ? (
+            <Text style={[styles.empty, { color: theme.secondaryText }]}>
+              {messages.error.message}
+            </Text>
+          ) : (
+            <ActivityIndicator style={styles.empty} />
+          )
         }
-        renderItem={({ item }) => <MessageBubble message={item} />}
+        renderItem={({ item }) => <MessageBubble message={item} mine={item.sender_id === me.id} />}
       />
 
       <View style={[styles.talkArea, { paddingBottom: insets.bottom + 24 }]}>
@@ -44,16 +70,18 @@ export default function ConversationScreen() {
           speakerName={talk.speaker?.display_name}
           startedAt={talk.startedAt}
           onPressIn={talk.start}
-          onPressOut={talk.stop}
+          onPressOut={() => {
+            talk.stop();
+            reloadSoon();
+          }}
         />
       </View>
     </View>
   );
 }
 
-function MessageBubble({ message }: { message: Message }) {
+function MessageBubble({ message, mine }: { message: Message; mine: boolean }) {
   const theme = useTheme();
-  const mine = message.sender_id === ME_ID;
 
   return (
     <View style={[styles.bubbleRow, mine && styles.mineRow]}>

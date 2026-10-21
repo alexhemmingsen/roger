@@ -1,29 +1,27 @@
 import { useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   KeyboardAvoidingView,
   Pressable,
   StyleSheet,
   Text,
   TextInput,
 } from "react-native";
-import { useSession } from "@/session";
+import { useLogIn } from "@/queries";
 import { useTheme } from "@/theme";
 
 export default function LoginScreen() {
   const theme = useTheme();
-  const { logIn } = useSession();
+  const logIn = useLogIn();
   const [name, setName] = useState("");
-  const [loggingIn, setLoggingIn] = useState(false);
+  const loggingIn = logIn.isPending;
   const canLogIn = name.trim().length > 0 && !loggingIn;
 
-  async function onLogIn() {
-    setLoggingIn(true);
-    try {
-      await logIn(name.trim());
-    } finally {
-      setLoggingIn(false);
-    }
+  function onLogIn() {
+    logIn.mutate(name.trim(), {
+      onError: (e) => Alert.alert("Couldn't log in", e.message),
+    });
   }
 
   return (

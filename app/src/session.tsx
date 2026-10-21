@@ -1,26 +1,26 @@
-import { createContext, use, useState, type ReactNode } from "react";
-import { ME_ID } from "./mock-store";
+import { useEffect } from "react";
+import { useMeQuery } from "./queries";
+import * as realtime from "./realtime";
+import type { User } from "./types";
 
-type Session = {
-  user: { id: string; displayName: string } | null;
-  logIn: (displayName: string) => Promise<void>;
-};
+// Logged in means: a saved Supabase session and a display name on the server.
+export function useSession() {
+  const me = useMeQuery();
+  const user = me.data ?? null;
 
-const SessionContext = createContext<Session | null>(null);
+  // Being connected is what makes you show up as online for others.
+  const userId = user?.id;
+  useEffect(() => {
+    if (!userId) return;
+    realtime.connect();
+    return () => realtime.disconnect();
+  }, [userId]);
 
-// Mock for now. The real version signs in anonymously with Supabase and saves the name on the server.
-export function SessionProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<Session["user"]>(null);
-
-  async function logIn(displayName: string) {
-    setUser({ id: ME_ID, displayName });
-  }
-
-  return <SessionContext value={{ user, logIn }}>{children}</SessionContext>;
+  return { user, loading: me.isPending };
 }
 
-export function useSession(): Session {
-  const session = use(SessionContext);
-  if (!session) throw new Error("useSession must be used inside SessionProvider");
-  return session;
+export function useMe(): User {
+  const { data } = useMeQuery();
+  if (!data) throw new Error("useMe needs a logged-in user");
+  return data;
 }
