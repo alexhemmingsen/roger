@@ -40,4 +40,6 @@ export const api = {
     request<Conversation>("POST", `/api/conversations/invites/${inviteId}/accept`),
   decline: (inviteId: string) =>
     request<null>("POST", `/api/conversations/invites/${inviteId}/decline`),
+  ask: (question: string) =>
+    request<{ answer: string }>("POST", "/api/assistant/ask", { question }),
 };

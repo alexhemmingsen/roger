@@ -81,3 +81,7 @@ export function useAcceptInvite() {
 export function useDeclineInvite() {
   return useMutation({ mutationFn: api.decline });
 }
+
+export function useAsk() {
+  return useMutation({ mutationFn: api.ask });
+}
