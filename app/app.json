@@ -8,7 +8,8 @@
     "scheme": "roger",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/expo.icon",
+      "bundleIdentifier": "com.alexhemmingsen.roger"
     },
     "android": {
       "adaptiveIcon": {
@@ -33,7 +34,18 @@
           "imageWidth": 76
         }
       ],
-      "expo-sqlite"
+      "expo-sqlite",
+      [
+        "react-native-audio-api",
+        {
+          "iosMicrophonePermission": "Roger uses the microphone while you hold the talk button.",
+          "iosBackgroundMode": false,
+          "androidPermissions": [
+            "android.permission.RECORD_AUDIO",
+            "android.permission.MODIFY_AUDIO_SETTINGS"
+          ]
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

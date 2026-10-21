@@ -1,6 +1,7 @@
 // The app's single WebSocket to the server: being online, invites and push-to-talk.
 import { useEffect, useEffectEvent, useSyncExternalStore } from "react";
 import { API_URL } from "./api";
+import { playChunk } from "./audio";
 import { accessToken } from "./supabase";
 import type { Conversation, Message, User } from "./types";
 
@@ -47,9 +48,12 @@ export async function connect() {
     headers: { Authorization: `Bearer ${token}` },
   });
   socket = ws;
+  ws.binaryType = "arraybuffer";
   ws.onopen = () => setConnected(true);
   ws.onmessage = (message) => {
+    // Text frames are events. Binary frames are audio from whoever is talking.
     if (typeof message.data === "string") emit(JSON.parse(message.data));
+    else playChunk(message.data as ArrayBuffer);
   };
   ws.onclose = () => {
     if (socket === ws) socket = null;
@@ -69,6 +73,10 @@ export function disconnect() {
 
 export function send(event: object) {
   if (socket?.readyState === WebSocket.OPEN) socket.send(JSON.stringify(event));
+}
+
+export function sendAudio(chunk: ArrayBuffer) {
+  if (socket?.readyState === WebSocket.OPEN) socket.send(chunk);
 }
 
 export function useConnected(): boolean {
