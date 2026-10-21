@@ -9,7 +9,8 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/expo.icon",
-      "bundleIdentifier": "com.alexhemmingsen.roger"
+      "bundleIdentifier": "com.alexhemmingsen.roger",
+      "appleTeamId": "648JZG624Q"
     },
     "android": {
       "adaptiveIcon": {
@@ -21,7 +22,7 @@
       "predictiveBackGestureEnabled": false
     },
     "web": {
-      "output": "server",
+      "output": "single",
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
