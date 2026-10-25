@@ -1,4 +1,43 @@
-# Local agent instructions, kept out of the repo
+# Dependencies and build output
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Environment files (the .env.example files are kept)
+.env
+.env*.local
+.env.keys
+
+# Local agent instructions
 CLAUDE.md
 AGENTS.md
 .claude/
+
+# Expo and React Native (app/)
+.expo/
+web-build/
+expo-env.d.ts
+.metro-health-check*
+app/ios/
+app/android/
+.kotlin/
+*.orig.*
+
+# Signing keys and certificates
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.pem
+
+# Supabase CLI (server/supabase/)
+server/supabase/.branches/
+server/supabase/.temp/
+server/supabase/signing_keys.json
+
+# Logs and OS files
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+.DS_Store
