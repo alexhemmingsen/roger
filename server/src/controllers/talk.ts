@@ -2,7 +2,7 @@ import { AppError } from "../errors.ts";
 import { getConversation } from "../services/conversations.ts";
 import { createMessage } from "../services/messages.ts";
 import type { Message } from "../types/messages.ts";
-import * as presence from "./presence.ts";
+import { sendAudio, sendEvent } from "../services/connections.ts";
 import * as transcription from "./transcription.ts";
 
 type Talk = {
@@ -43,7 +43,7 @@ export async function start(
     chunks: [],
   });
   for (const id of listenerIds) {
-    presence.sendEvent(id, {
+    sendEvent(id, {
       type: "talk_started",
       conversationId,
       speakerId: userId,
@@ -55,7 +55,7 @@ export function audio(userId: string, chunk: ArrayBuffer): void {
   const talk = findTalk(userId);
   if (!talk) return;
   talk.chunks.push(Buffer.from(chunk));
-  for (const id of talk.listenerIds) presence.sendAudio(id, chunk);
+  for (const id of talk.listenerIds) sendAudio(id, chunk);
 }
 
 export async function stop(userId: string): Promise<Message | null> {
@@ -83,7 +83,7 @@ export async function stop(userId: string): Promise<Message | null> {
 
 function notifyEnded(talk: Talk, message: Message | null): void {
   for (const id of talk.listenerIds) {
-    presence.sendEvent(id, {
+    sendEvent(id, {
       type: "talk_ended",
       conversationId: talk.conversationId,
       message,

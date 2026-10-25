@@ -6,11 +6,13 @@ import {
 } from "../services/conversations.ts";
 import { getUser } from "../services/users.ts";
 import { accept, decline, get, invite, list } from "./conversations.ts";
-import { sameNetwork, sendEvent } from "./presence.ts";
+import { sendEvent } from "../services/connections.ts";
+import { sameNetwork } from "./presence.ts";
 
 vi.mock("../supabase.ts", () => ({ supabaseAdmin: {} }));
 vi.mock("../services/conversations.ts");
 vi.mock("../services/users.ts");
+vi.mock("../services/connections.ts");
 vi.mock("./presence.ts");
 
 const alex = {

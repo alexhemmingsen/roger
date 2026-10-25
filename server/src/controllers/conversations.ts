@@ -7,6 +7,7 @@ import {
 } from "../services/conversations.ts";
 import { getUser } from "../services/users.ts";
 import type { ConversationWithMembers } from "../types/conversations.ts";
+import { sendEvent } from "../services/connections.ts";
 import * as presence from "./presence.ts";
 
 type Invite = { id: string; fromUserId: string; toUserId: string };
@@ -28,7 +29,7 @@ export async function invite(
 
   const invite = { id: randomUUID(), fromUserId, toUserId };
   invites.set(invite.id, invite);
-  presence.sendEvent(toUserId, { type: "invite", inviteId: invite.id, from });
+  sendEvent(toUserId, { type: "invite", inviteId: invite.id, from });
   return invite;
 }
 
@@ -41,7 +42,7 @@ export async function accept(
     createdBy: invite.fromUserId,
     memberIds: [invite.toUserId],
   });
-  presence.sendEvent(invite.fromUserId, {
+  sendEvent(invite.fromUserId, {
     type: "invite_accepted",
     inviteId,
     conversation,
@@ -51,7 +52,7 @@ export async function accept(
 
 export function decline(inviteId: string, userId: string): void {
   const invite = takeInvite(inviteId, userId);
-  presence.sendEvent(invite.fromUserId, { type: "invite_declined", inviteId });
+  sendEvent(invite.fromUserId, { type: "invite_declined", inviteId });
 }
 
 function takeInvite(inviteId: string, userId: string): Invite {

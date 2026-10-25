@@ -7,8 +7,6 @@ import {
   listNearby,
   networkId,
   sameNetwork,
-  sendAudio,
-  sendEvent,
 } from "./presence.ts";
 
 vi.mock("../supabase.ts", () => ({ supabaseAdmin: {} }));
@@ -67,50 +65,20 @@ describe("sameNetwork", () => {
 });
 
 describe("connect and disconnect", () => {
-  it("replaces an older connection and closes it", () => {
-    const oldSocket = fakeSocket();
-    const newSocket = fakeSocket();
-    connect("device-user", "203.0.113.9", oldSocket);
-    connect("device-user", "203.0.113.9", newSocket);
+  it("files the user under the network of their address", () => {
+    connect("local-user", "192.168.1.20", fakeSocket());
+    connect("other-local-user", "10.0.0.5", fakeSocket());
 
-    sendEvent("device-user", { type: "ping" });
-
-    expect(oldSocket.close).toHaveBeenCalled();
-    expect(oldSocket.send).not.toHaveBeenCalled();
-    expect(newSocket.send).toHaveBeenCalledWith('{"type":"ping"}');
+    expect(sameNetwork("local-user", "other-local-user")).toBe(true);
   });
 
-  it("ignores the old socket closing after a new one connected", () => {
-    const oldSocket = fakeSocket();
-    const newSocket = fakeSocket();
-    connect("reconnect-user", "203.0.113.9", oldSocket);
-    connect("reconnect-user", "203.0.113.9", newSocket);
-
-    disconnect("reconnect-user", oldSocket);
-    sendEvent("reconnect-user", { type: "ping" });
-
-    expect(newSocket.send).toHaveBeenCalled();
-  });
-
-  it("stops sending to a user after they disconnect", () => {
+  it("takes the user offline when they disconnect", () => {
     const socket = fakeSocket();
-    connect("leaving-user", "203.0.113.9", socket);
+    connect("leaving-a", "203.0.113.9", socket);
+    connect("leaving-b", "203.0.113.9", fakeSocket());
 
-    disconnect("leaving-user", socket);
-    sendEvent("leaving-user", { type: "ping" });
+    disconnect("leaving-a", socket);
 
-    expect(socket.send).not.toHaveBeenCalled();
-  });
-});
-
-describe("sendAudio", () => {
-  it("sends the audio chunk as is", () => {
-    const socket = fakeSocket();
-    const chunk = new ArrayBuffer(8);
-    connect("audio-user", "203.0.113.9", socket);
-
-    sendAudio("audio-user", chunk);
-
-    expect(socket.send).toHaveBeenCalledWith(chunk);
+    expect(sameNetwork("leaving-a", "leaving-b")).toBe(false);
   });
 });

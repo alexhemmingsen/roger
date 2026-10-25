@@ -1,14 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { getConversation } from "../services/conversations.ts";
 import { createMessage } from "../services/messages.ts";
-import { sendAudio, sendEvent } from "./presence.ts";
+import { sendAudio, sendEvent } from "../services/connections.ts";
 import { audio, start, stop } from "./talk.ts";
 import { enqueue } from "./transcription.ts";
 
 vi.mock("../supabase.ts", () => ({ supabaseAdmin: {} }));
 vi.mock("../services/conversations.ts");
 vi.mock("../services/messages.ts");
-vi.mock("./presence.ts");
+vi.mock("../services/connections.ts");
 vi.mock("./transcription.ts");
 
 // Talks live in memory between tests, so each test gets its own users and conversation.

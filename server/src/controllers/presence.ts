@@ -1,11 +1,13 @@
 import { BlockList, isIPv6 } from "node:net";
 import type { WSContext } from "hono/ws";
+import {
+  addConnection,
+  networkOf,
+  removeConnection,
+  usersOnNetwork,
+} from "../services/connections.ts";
 import { getUsers } from "../services/users.ts";
 import type { User } from "../types/users.ts";
-
-type Connection = { socket: WSContext; networkId: string };
-
-const online = new Map<string, Connection>();
 
 const localAddresses = new BlockList();
 localAddresses.addSubnet("10.0.0.0", 8);
@@ -39,35 +41,20 @@ function ipv6Prefix(address: string): string {
 }
 
 export function connect(userId: string, ip: string, socket: WSContext): void {
-  online.get(userId)?.socket.close(4000, "Connected from another device");
-  online.set(userId, { socket, networkId: networkId(ip) });
+  addConnection(userId, socket, networkId(ip));
 }
 
 export function disconnect(userId: string, socket: WSContext): void {
-  if (online.get(userId)?.socket === socket) online.delete(userId);
+  removeConnection(userId, socket);
 }
 
+// Both users must be online, on the same network.
 export function sameNetwork(userA: string, userB: string): boolean {
-  const a = online.get(userA);
-  const b = online.get(userB);
-  return !!a && !!b && a.networkId === b.networkId;
+  const network = networkOf(userA);
+  return !!network && network === networkOf(userB);
 }
 
 export function listNearby(userId: string, ip: string): Promise<User[]> {
-  const network = networkId(ip);
-  const ids = [...online]
-    .filter(([id, c]) => id !== userId && c.networkId === network)
-    .map(([id]) => id);
+  const ids = usersOnNetwork(networkId(ip)).filter((id) => id !== userId);
   return getUsers(ids);
-}
-
-export function sendEvent(
-  userId: string,
-  event: { type: string; [key: string]: unknown },
-): void {
-  online.get(userId)?.socket.send(JSON.stringify(event));
-}
-
-export function sendAudio(userId: string, chunk: ArrayBuffer): void {
-  online.get(userId)?.socket.send(chunk);
 }
